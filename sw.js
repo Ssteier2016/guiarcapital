@@ -2,37 +2,45 @@ const CACHE_NAME = 'guiarcapital-v1';
 const urlsToCache = [
   '/',
   '/index.html',
-  '/styles.css',
-  '/script.js',
   '/manifest.json',
-  '/icon-192.png',
-  '/icon-512.png'
+  '/assets/icon-192.png',
+  '/assets/icon-512.png'
 ];
 
-// Instalar el SW y cachear archivos
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => cache.addAll(urlsToCache))
   );
+  self.skipWaiting();
 });
 
-// Activar y limpiar cachés viejos
 self.addEventListener('activate', event => {
   event.waitUntil(
-    caches.keys().then(cacheNames => {
+    caches.keys().then(names => {
       return Promise.all(
-        cacheNames.filter(name => name !== CACHE_NAME)
+        names.filter(name => name !== CACHE_NAME)
           .map(name => caches.delete(name))
       );
     })
   );
+  self.clients.claim();
 });
 
-// Interceptar peticiones y servir desde caché
 self.addEventListener('fetch', event => {
+  if (event.request.method !== 'GET') return;
+  
   event.respondWith(
     caches.match(event.request)
-      .then(response => response || fetch(event.request))
+      .then(response => {
+        if (response) {
+          return response;
+        }
+        return fetch(event.request).catch(() => {
+          if (event.request.destination === 'document') {
+            return caches.match('/index.html');
+          }
+        });
+      })
   );
 });
