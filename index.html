@@ -43,6 +43,36 @@
             font-size: 2.5em;
             font-weight: 700;
         }
+        
+        /* Estilos para el nuevo banner */
+        .top-banner {
+            background: #f59e0b; /* Amber */
+            color: #1e293b;
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-dismiss {
+            background: transparent;
+            border: none;
+            color: #1e293b;
+            font-size: 1.2em;
+            cursor: pointer;
+            opacity: 0.8;
+            transition: opacity 0.2s;
+            padding: 0 10px;
+        }
+
+        .btn-dismiss:hover {
+            opacity: 1;
+        }
+        /* Fin estilos banner */
 
         .portfolio-summary {
             display: flex;
@@ -344,12 +374,13 @@
 
         .transactions-table th,
         .transactions-table td {
-            padding: 12px;
+            padding: 10px 8px; /* Ajuste para más columnas */
             text-align: left;
             border-bottom: 1px solid rgba(71, 85, 105, 0.3);
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            font-size: 14px;
         }
 
         .transactions-table th {
@@ -477,12 +508,12 @@
             }
 
             .transactions-table {
-                font-size: 12px;
+                font-size: 10px; /* Reducción de fuente en móvil */
             }
 
             .transactions-table th,
             .transactions-table td {
-                padding: 8px 4px;
+                padding: 6px 3px;
             }
         }
     </style>
@@ -495,6 +526,13 @@
     </div>
 
     <div class="container">
+        <!-- TOP BANNER AGREGADO -->
+        <div id="topBanner" class="top-banner" style="display: none;">
+            <p>¡Bienvenido! Los precios en vivo son informativos y utilizan la API de Alpha Vantage (USD) y la cotización MEP para la conversión a pesos ($).</p>
+            <button class="btn-dismiss" onclick="dismissBanner()">✖</button>
+        </div>
+        <!-- FIN TOP BANNER -->
+
         <header class="header">
             <h1>📈 GuiarCapital</h1>
             <p>Gestiona tus inversiones y portafolios de manera profesional</p>
@@ -511,11 +549,11 @@
             <!-- Resumen del Portafolio -->
             <div id="portfolioSummary" class="portfolio-summary">
                 <div class="summary-card">
-                    <div class="label">Saldo Total ARS</div>
+                    <div class="label">Saldo Total $</div>
                     <div class="value" id="balanceArs">Cargando...</div>
                 </div>
                 <div class="summary-card">
-                    <div class="label">Ganancia ARS</div>
+                    <div class="label">Ganancia $</div>
                     <div class="value" id="gainArs">Cargando...</div>
                 </div>
                 <div class="summary-card">
@@ -555,7 +593,34 @@
                 <!-- Los portafolios se mostrarán aquí -->
             </div>
 
-            <div class="form-group">
+            <!-- SECCIÓN: Posiciones Actuales (con precios en vivo) -->
+            <h2 style="color: #3b82f6; margin-top: 30px; margin-bottom: 20px;">Posiciones Actuales y Precios en Vivo</h2>
+            
+            <div class="scrollable-table">
+                <table id="holdingsTable" class="transactions-table">
+                    <thead>
+                        <tr>
+                            <th>Ticker</th>
+                            <th>Tipo</th>
+                            <th>Cantidad</th>
+                            <th>Costo Prom. ($)</th>
+                            <!-- Precio de la acción subyacente en el mercado original (USD) -->
+                            <th>Precio Subyacente (USD)</th>
+                            <!-- Precio de la unidad de CEDEAR/Acción en USD -->
+                            <th>Precio CEDEAR/Acc. (USD)</th> 
+                            <th>Precio CEDEAR/Acc. ($ Implícito)</th>
+                            <th>Valor Actual ($)</th>
+                            <th>Ganancia/Pérdida ($)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Las tenencias se mostrarán aquí -->
+                    </tbody>
+                </table>
+            </div>
+            <!-- FIN SECCIÓN -->
+
+            <div class="form-group" style="margin-top: 30px;">
                 <label>Ver Transacciones de:</label>
                 <select id="portfolioFilter" onchange="filterTransactions()">
                     <option value="all">Todas las carteras</option>
@@ -610,7 +675,7 @@
                     <div class="form-group">
                         <label>Moneda</label>
                         <select id="currency" required>
-                            <option value="ARS">ARS (Pesos)</option>
+                            <option value="ARS">$ (Pesos)</option> 
                             <option value="USD">USD (Dólares)</option>
                         </select>
                     </div>
@@ -649,13 +714,12 @@
                             <th>Portafolio</th>
                             <th>Ticker</th>
                             <th>Tipo</th>
-                            <th>Activo</th>
-                            <th>Precio</th>
-                            <th>Moneda</th>
+                            <th>Precio Transacción</th>
                             <th>Cantidad</th>
-                            <th>Total</th>
-                            <th>Broker</th>
-                            <th>Notas</th>
+                            <!-- Nuevas columnas para precios en vivo y ganancia -->
+                            <th>Precio Actual ($ Unidad)</th> 
+                            <th>Valor Actual ($ Total)</th>
+                            <th>Ganancia/Pérdida ($)</th>
                             <th>Acciones</th>
                         </tr>
                     </thead>
@@ -728,6 +792,7 @@
         };
 
         // Datos de acciones argentinas (muestra)
+        // Nota: Para estas acciones, la API de Alpha Vantage devuelve null, por lo que usaremos el costo promedio como valor actual
         const argentineStocks = [
             { symbol: 'GGAL', name: 'Grupo Galicia' }, { symbol: 'YPFD', name: 'YPF' },
             { symbol: 'ALUA', name: 'Aluar' }, { symbol: 'BBAR', name: 'Banco BBVA' },
@@ -742,6 +807,12 @@
             ...argentineStocks.map(s => ({ symbol: s.symbol, name: s.name })),
             ...Object.keys(cedearsRatios).map(symbol => ({ symbol: symbol, name: symbol }))
         ];
+
+        // Función para descartar el banner
+        function dismissBanner() {
+            document.getElementById('topBanner').style.display = 'none';
+            localStorage.setItem('bannerDismissed', 'true');
+        }
 
         // Función para cargar cotizaciones del dólar
         async function loadDollarRates() {
@@ -777,6 +848,7 @@
                     if (result.data) {
                         validRates++;
                         dollarRates[result.name.toLowerCase()] = result.data;
+                        // Uso de $ para pesos
                         gridHTML += `
                             <div class="dollar-card">
                                 <div class="name">${result.name}</div>
@@ -796,8 +868,9 @@
                 
                 dollarGrid.innerHTML = gridHTML;
                 
-                // Después de cargar las cotizaciones, actualizar el resumen del portafolio
+                // Después de cargar las cotizaciones, actualizar el resumen del portafolio y las tenencias
                 calculateAndDisplaySummary();
+                displayHoldings();
             } catch (error) {
                 console.error('Error general cargando cotizaciones:', error);
                 dollarGrid.innerHTML = '<div class="loading">⚠️ Sin conexión a internet</div>';
@@ -809,11 +882,14 @@
             if (fromCurrency === toCurrency) return amount;
             
             const rate = dollarRates[rateType];
-            if (!rate) return amount;
+            // Si la tasa no está cargada, retornar el mismo monto
+            if (!rate) return amount; 
             
             if (fromCurrency === 'USD' && toCurrency === 'ARS') {
+                // Usamos la tasa de VENTA para saber cuánto ARS obtenemos por 1 USD
                 return amount * (rate.venta || rate.compra || 1);
             } else if (fromCurrency === 'ARS' && toCurrency === 'USD') {
+                // Usamos la tasa de COMPRA para saber cuánto USD obtenemos por 1 ARS
                 return amount / (rate.compra || rate.venta || 1);
             }
             
@@ -824,10 +900,20 @@
 
         // Función para obtener precio de una acción con reintento y backoff exponencial
         async function fetchStockPriceWithRetry(symbol, retries = 3, delay = 1000) {
+            // Verifica si el ticker es una acción argentina (no CEDEAR)
+            const isArgentineStock = argentineStocks.some(s => s.symbol === symbol);
+            
+            // Si es acción argentina, no intentamos obtener el precio de AV (ya que no lo tiene)
+            // En un app real, aquí se usaría una API local.
+            if (isArgentineStock) {
+                 return null;
+            }
+
             if (stockPricesCache[symbol]) {
                 return stockPricesCache[symbol];
             }
             
+            // Alpha Vantage devuelve el precio de la acción subyacente en USD
             const apiUrl = `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${symbol}&apikey=${ALPHA_VANTAGE_API_KEY}`;
             
             for (let i = 0; i < retries; i++) {
@@ -847,7 +933,8 @@
                         console.warn(`Alpha Vantage rate limit reached. Retrying for ${symbol}...`);
                         await new Promise(resolve => setTimeout(resolve, delay * Math.pow(2, i)));
                     } else {
-                        throw new Error('Datos de cotización no encontrados.');
+                        // Ticker no encontrado o error en los datos
+                        return null; 
                     }
                 } catch (error) {
                     console.error(`Error al obtener precio de ${symbol} (intento ${i + 1}):`, error.message);
@@ -879,7 +966,116 @@
 
             const holdings = {}; // { symbol: { quantity: N, assetType: 'accion'|'cedear', costArs: X, costUsd: Y } }
 
-            // 1. Calcular tenencias y costo promedio
+            // 1. Calcular tenencias y costo promedio (lo que ya pagamos)
+            transactions.forEach(t => {
+                const isBuy = t.type === 'compra';
+                const sign = isBuy ? 1 : -1;
+
+                if (!holdings[t.symbol]) {
+                    holdings[t.symbol] = { 
+                        quantity: 0, 
+                        assetType: t.assetType, 
+                        costArs: 0, 
+                        costUsd: 0,
+                    };
+                }
+                
+                // Conversión a ARS ($) y USD (U$D) del COSTO
+                // Usamos dólar MEP para valuación general del costo
+                const totalInArs = t.currency === 'ARS' ? t.total : convertCurrency(t.total, 'USD', 'ARS', 'mep');
+                const totalInUsd = t.currency === 'USD' ? t.total : convertCurrency(t.total, 'ARS', 'USD', 'mep');
+                
+                holdings[t.symbol].quantity += sign * t.quantity;
+                holdings[t.symbol].costArs += sign * totalInArs;
+                holdings[t.symbol].costUsd += sign * totalInUsd;
+            });
+
+            // 2. Obtener precios de mercado (live) y calcular valor actual
+            const symbolsToFetch = [...new Set(Object.keys(holdings))];
+            
+            // Crear promesas para obtener los precios en paralelo
+            const fetchPromises = symbolsToFetch.map(symbol => {
+                const holding = holdings[symbol];
+                if (holding.quantity <= 0) return Promise.resolve(null);
+
+                return fetchStockPriceWithRetry(symbol)
+                    .then(price => {
+                        const mepRate = dollarRates.mep ? (dollarRates.mep.venta || dollarRates.mep.compra || 1) : 1;
+                        let currentValueArs = 0;
+                        let currentValueUsd = 0;
+                        
+                        if (price !== null) {
+                            // Precio de la acción subyacente en USD
+                            const priceSubyacenteUsd = price;
+
+                            if (holding.assetType === 'cedear') {
+                                // Cálculo del precio implícito del CEDEAR
+                                const ratio = cedearsRatios[symbol] || 1;
+                                const priceCedearUsd = priceSubyacenteUsd / ratio;
+                                currentValueUsd = priceCedearUsd * holding.quantity;
+                                currentValueArs = currentValueUsd * mepRate; // Valorizar a ARS con MEP
+                            } else {
+                                // Acción local: simulamos valorizar a precio de subyacente * MEP
+                                currentValueArs = (priceSubyacenteUsd * mepRate) * holding.quantity;
+                                currentValueUsd = currentValueArs / mepRate;
+                            }
+                        } else {
+                            // Si no hay precio en vivo (ej: acciones locales o error), valoramos al costo promedio
+                            currentValueArs = holding.costArs;
+                            currentValueUsd = holding.costUsd;
+                        }
+                        
+                        totalBalanceArs += currentValueArs;
+                        totalBalanceUsd += currentValueUsd;
+                        
+                        return price;
+                    })
+                    .catch(() => {
+                        // En caso de error de red, valoramos al costo promedio
+                        if (holding.quantity > 0) {
+                            totalBalanceArs += holding.costArs;
+                            totalBalanceUsd += holding.costUsd;
+                        }
+                    });
+            });
+
+            // Esperar que todos los precios sean obtenidos y procesados
+            await Promise.all(fetchPromises);
+            
+            // Recalcular costos totales (necesario si las promesas fallan, aunque el cálculo ya está en el loop)
+            // Esto es redundante pero asegura que el costo se sume correctamente si la promesa falla.
+            Object.values(holdings).forEach(holding => {
+                if (holding.quantity <= 0) {
+                    totalCostArs += holding.costArs;
+                    totalCostUsd += holding.costUsd;
+                }
+            });
+
+
+            const totalGainArs = totalBalanceArs - totalCostArs;
+            const totalGainUsd = totalBalanceUsd - totalCostUsd;
+            
+            // 3. Mostrar los resultados en la interfaz
+            // Uso de $ para ARS
+            balanceArsElement.innerText = `$${totalBalanceArs.toFixed(2)}`;
+            gainArsElement.innerText = `$${totalGainArs.toFixed(2)}`;
+            gainArsElement.classList.toggle('positive-gain', totalGainArs >= 0);
+            gainArsElement.classList.toggle('negative-gain', totalGainArs < 0);
+
+            // Uso de U$D para USD
+            balanceUsdElement.innerText = `U$D${totalBalanceUsd.toFixed(2)}`;
+            gainUsdElement.innerText = `U$D${totalGainUsd.toFixed(2)}`;
+            gainUsdElement.classList.toggle('positive-gain', totalGainUsd >= 0);
+            gainUsdElement.classList.toggle('negative-gain', totalGainUsd < 0);
+        }
+
+        // Nueva función para mostrar las tenencias actuales y precios en vivo
+        async function displayHoldings() {
+            const tbody = document.querySelector('#holdingsTable tbody');
+            tbody.innerHTML = '<tr><td colspan="9" style="text-align: center;">Cargando tenencias y precios en vivo...</td></tr>';
+            
+            // 1. Agrupar tenencias (similar a calculateAndDisplaySummary, pero solo para tenencias > 0)
+            const holdings = {};
             transactions.forEach(t => {
                 const isBuy = t.type === 'compra';
                 const sign = isBuy ? 1 : -1;
@@ -888,82 +1084,83 @@
                     holdings[t.symbol] = { quantity: 0, assetType: t.assetType, costArs: 0, costUsd: 0 };
                 }
 
-                // Convertir la transacción a ARS y USD
-                const totalInArs = t.currency === 'ARS' ? t.total : convertCurrency(t.total, 'USD', 'ARS', 'blue'); // Usar dólar blue para tenencias de USD
-                const totalInUsd = t.currency === 'USD' ? t.total : convertCurrency(t.total, 'ARS', 'USD', 'blue');
+                const totalInArs = t.currency === 'ARS' ? t.total : convertCurrency(t.total, 'USD', 'ARS', 'mep'); 
                 
                 holdings[t.symbol].quantity += sign * t.quantity;
                 holdings[t.symbol].costArs += sign * totalInArs;
-                holdings[t.symbol].costUsd += sign * totalInUsd;
             });
 
-            // 2. Obtener precios de mercado y calcular valor actual
-            const symbolsToFetch = [...new Set(Object.keys(holdings))];
-            const fetchPromises = symbolsToFetch.map(symbol => {
-                const holding = holdings[symbol];
-                return fetchStockPriceWithRetry(symbol)
-                    .then(price => {
-                        const stockPriceUsd = price;
-                        let currentValueUsd = 0;
-                        if (stockPriceUsd !== null) {
-                            if (holding.assetType === 'cedear') {
-                                const ratio = cedearsRatios[symbol] || 1;
-                                currentValueUsd = (stockPriceUsd / ratio) * holding.quantity;
-                            } else {
-                                // Asumimos que las acciones argentinas no se listan en Alpha Vantage y se valoran en ARS
-                                // Por simplicidad en este ejemplo, no se obtendrán precios en vivo para acciones locales
-                            }
-                        }
-                        
-                        return { symbol, currentValueUsd, stockPriceUsd };
-                    })
-                    .catch(error => {
-                        console.error(`No se pudo obtener el precio de ${symbol}:`, error);
-                        return { symbol, currentValueUsd: 0, stockPriceUsd: null };
-                    });
-            });
-
-            const currentPrices = await Promise.all(fetchPromises);
+            const activeHoldings = Object.entries(holdings).filter(([, h]) => h.quantity > 0);
             
-            currentPrices.forEach(item => {
-                const holding = holdings[item.symbol];
-                if (holding && holding.quantity > 0) {
-                    const currentValueUsd = item.currentValueUsd;
-                    const currentValueArs = convertCurrency(currentValueUsd, 'USD', 'ARS', 'mep'); // Usar dólar MEP para valoración
-                    
-                    totalBalanceArs += currentValueArs;
-                    totalBalanceUsd += currentValueUsd;
-                    totalCostArs += holding.costArs;
-                    totalCostUsd += holding.costUsd;
+            if (activeHoldings.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="9" style="text-align: center;">No tienes posiciones abiertas.</td></tr>';
+                return;
+            }
+
+            // 2. Obtener precios de mercado
+            const fetchPromises = activeHoldings.map(([symbol, holding]) => 
+                fetchStockPriceWithRetry(symbol)
+                    .then(price => ({ symbol, price, holding }))
+                    .catch(() => ({ symbol, price: null, holding }))
+            );
+
+            const results = await Promise.all(fetchPromises);
+            
+            let rowsHTML = '';
+            const mepRate = dollarRates.mep ? (dollarRates.mep.venta || dollarRates.mep.compra || 1) : 1;
+
+            results.forEach(({ symbol, price: stockPriceUsd, holding }) => {
+                if (holding.quantity <= 0) return;
+                
+                const ratio = cedearsRatios[symbol] || 1;
+                const assetType = holding.assetType.toUpperCase();
+                
+                let priceSubyacenteUsdDisplay = 'N/D';
+                let priceUnitUsdDisplay = 'N/D'; // Nueva variable para el precio de la unidad en USD
+                let pricePerUnitArs = null; 
+                let currentValueArs = 0;
+                let avgCostArs = holding.costArs / holding.quantity;
+                
+                if (stockPriceUsd !== null) {
+                    // Precio de la acción subyacente en USD
+                    const priceSubyacenteUsd = stockPriceUsd; 
+                    priceSubyacenteUsdDisplay = priceSubyacenteUsd.toFixed(2);
+
+                    // Calculamos el precio de la unidad (CEDEAR o Acción Local) en USD
+                    const priceUnitUsd = (assetType === 'CEDEAR') ? (priceSubyacenteUsd / ratio) : priceSubyacenteUsd;
+                    priceUnitUsdDisplay = priceUnitUsd.toFixed(2);
+
+                    // Precio Implícito en Pesos ($)
+                    pricePerUnitArs = priceUnitUsd * mepRate;
+                    currentValueArs = pricePerUnitArs * holding.quantity;
+
+                } else {
+                    // Si no hay precio en vivo (ej: acciones locales o error), usamos el costo promedio
+                    pricePerUnitArs = avgCostArs;
+                    currentValueArs = holding.costArs;
                 }
+                
+                const gainArs = currentValueArs - holding.costArs;
+                const gainClass = gainArs >= 0 ? 'positive-gain' : 'negative-gain';
+                
+                const pricePerUnitArsDisplay = pricePerUnitArs !== null ? pricePerUnitArs.toFixed(2) : 'N/D';
+
+                rowsHTML += `
+                    <tr>
+                        <td><strong>${symbol}</strong></td>
+                        <td>${assetType}</td>
+                        <td>${holding.quantity}</td>
+                        <td>$${avgCostArs.toFixed(2)}</td>
+                        <td>U$D${priceSubyacenteUsdDisplay}</td>
+                        <td>U$D${priceUnitUsdDisplay}</td>
+                        <td>$${pricePerUnitArsDisplay}</td>
+                        <td>$${currentValueArs.toFixed(2)}</td>
+                        <td class="${gainClass}">$${gainArs.toFixed(2)}</td>
+                    </tr>
+                `;
             });
 
-            const totalGainArs = totalBalanceArs - totalCostArs;
-            const totalGainUsd = totalBalanceUsd - totalCostUsd;
-            
-            // 3. Mostrar los resultados en la interfaz
-            balanceArsElement.innerText = `$${totalBalanceArs.toFixed(2)}`;
-            gainArsElement.innerText = `$${totalGainArs.toFixed(2)}`;
-            gainArsElement.classList.toggle('positive-gain', totalGainArs >= 0);
-            gainArsElement.classList.toggle('negative-gain', totalGainArs < 0);
-
-            balanceUsdElement.innerText = `U$D${totalBalanceUsd.toFixed(2)}`;
-            gainUsdElement.innerText = `U$D${totalGainUsd.toFixed(2)}`;
-            gainUsdElement.classList.toggle('positive-gain', totalGainUsd >= 0);
-            gainUsdElement.classList.toggle('negative-gain', totalGainUsd < 0);
-        }
-
-        // Función para mostrar equivalencias en las transacciones
-        function showCurrencyEquivalent(price, currency) {
-            if (!dollarRates.oficial) return '';
-            
-            const equivalent = currency === 'USD' 
-                ? convertCurrency(price, 'USD', 'ARS', 'oficial')
-                : convertCurrency(price, 'ARS', 'USD', 'oficial');
-            
-            const equivalentCurrency = currency === 'USD' ? 'ARS' : 'USD';
-            
-            return ` (~${equivalent.toFixed(2)} ${equivalentCurrency})`;
+            tbody.innerHTML = rowsHTML;
         }
 
         // PWA - Service Worker y instalación
@@ -1003,10 +1200,11 @@
             if (tabName === 'portfolios') {
                 displayPortfolios();
                 calculateAndDisplaySummary();
+                displayHoldings(); // Actualizar tenencias
             } else if (tabName === 'transaction') {
                 updatePortfolioSelects();
             } else if (tabName === 'transactions') {
-                displayTransactions();
+                displayTransactions(); // ACTUALIZADO para usar async/await
             }
         }
 
@@ -1032,6 +1230,7 @@
             displayPortfolios();
             updatePortfolioSelects();
             calculateAndDisplaySummary();
+            displayHoldings(); // Actualizar tenencias
             
             document.getElementById('portfolioName').value = '';
             document.getElementById('portfolioBroker').value = '';
@@ -1073,6 +1272,7 @@
                 displayPortfolios();
                 updatePortfolioSelects();
                 calculateAndDisplaySummary();
+                displayHoldings(); // Actualizar tenencias
             }
         }
 
@@ -1196,10 +1396,15 @@
             document.getElementById('transactionDate').valueAsDate = new Date();
             
             calculateAndDisplaySummary();
+            displayHoldings(); // Actualizar tenencias
         }
 
-        function displayTransactions(portfolioFilter = null) {
+        // Función displayTransactions ACTUALIZADA
+        async function displayTransactions(portfolioFilter = null) {
             const tbody = document.querySelector('#transactionsTable tbody');
+            // 1. Mostrar estado de carga (colspan ajustado a 10)
+            tbody.innerHTML = '<tr><td colspan="10" style="text-align: center;">Cargando transacciones...</td></tr>';
+
             let filteredTransactions = transactions;
 
             if (portfolioFilter) {
@@ -1207,28 +1412,83 @@
             }
 
             if (filteredTransactions.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="12" style="text-align: center;">No hay transacciones registradas</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="10" style="text-align: center;">No hay transacciones registradas</td></tr>';
                 return;
             }
+            
+            // 2. Obtener precios en vivo de los símbolos involucrados
+            const uniqueSymbols = [...new Set(filteredTransactions.map(t => t.symbol))];
+            const pricesPromises = uniqueSymbols.map(symbol => fetchStockPriceWithRetry(symbol));
+            const livePrices = (await Promise.all(pricesPromises)).reduce((acc, price, index) => {
+                acc[uniqueSymbols[index]] = price;
+                return acc;
+            }, {});
+            
+            const mepRate = dollarRates.mep ? (dollarRates.mep.venta || dollarRates.mep.compra || 1) : 1;
+            
+            // Helper para mostrar la moneda: ARS -> $
+            const getCurrencySymbol = (currency) => currency === 'ARS' ? '$' : 'U$D';
 
             tbody.innerHTML = filteredTransactions
                 .sort((a, b) => new Date(b.date) - new Date(a.date))
-                .map(transaction => `
-                    <tr>
-                        <td>${new Date(transaction.date).toLocaleDateString()}</td>
-                        <td>${transaction.portfolioName}</td>
-                        <td>${transaction.symbol}</td>
-                        <td><span style="color: ${transaction.type === 'compra' ? '#10b981' : '#ef4444'}">${transaction.type.toUpperCase()}</span></td>
-                        <td>${transaction.assetType.toUpperCase()}</td>
-                        <td>${transaction.price.toFixed(2)} ${transaction.currency}</td>
-                        <td>${transaction.currency}</td>
-                        <td>${transaction.quantity}</td>
-                        <td>${transaction.total.toFixed(2)} ${transaction.currency}</td>
-                        <td>${transaction.broker}</td>
-                        <td title="${transaction.notes}">${transaction.notes ? transaction.notes.substring(0, 30) + (transaction.notes.length > 30 ? '...' : '') : '-'}</td>
-                        <td><button class="btn btn-danger" onclick="deleteTransaction(${transaction.id})" style="padding: 5px 10px; font-size: 12px;">Eliminar</button></td>
-                    </tr>
-                `).join('');
+                .map(transaction => {
+                    const stockPriceUsd = livePrices[transaction.symbol];
+                    const ratio = cedearsRatios[transaction.symbol] || 1;
+                    const assetType = transaction.assetType.toUpperCase();
+                    
+                    let priceUnitArsLive = 0;
+                    let valueTotalArsLive = 0;
+                    let priceTransactSymbol = getCurrencySymbol(transaction.currency);
+                    let displayGain = 'N/A';
+                    let gainClass = '';
+
+                    // Cálculo del valor actual
+                    if (stockPriceUsd !== null) {
+                        // 1. Calcular precio unitario en USD
+                        const priceUnitUsd = (assetType === 'CEDEAR') ? (stockPriceUsd / ratio) : stockPriceUsd;
+
+                        // 2. Convertir a ARS ($) usando MEP
+                        priceUnitArsLive = priceUnitUsd * mepRate;
+                        
+                        // 3. Calcular valor total actual en ARS
+                        valueTotalArsLive = priceUnitArsLive * transaction.quantity;
+                    } else {
+                        // Si no hay precio en vivo (acciones locales o error), usar valor histórico en ARS
+                        if (transaction.currency === 'ARS') {
+                            priceUnitArsLive = transaction.price;
+                            valueTotalArsLive = transaction.total;
+                        } else {
+                            // USD a ARS usando MEP para estimar el valor actual en pesos
+                            priceUnitArsLive = convertCurrency(transaction.price, 'USD', 'ARS', 'mep');
+                            valueTotalArsLive = convertCurrency(transaction.total, 'USD', 'ARS', 'mep');
+                        }
+                    }
+                    
+                    // Calcular ganancia/pérdida (solo para COMPRAS)
+                    if (transaction.type === 'compra') {
+                        // Convertir el costo histórico a ARS con la tasa MEP (para base de comparación)
+                        const costTransactArs = transaction.currency === 'ARS' ? transaction.total : convertCurrency(transaction.total, 'USD', 'ARS', 'mep');
+                        
+                        const gainArs = valueTotalArsLive - costTransactArs;
+                        gainClass = gainArs >= 0 ? 'positive-gain' : 'negative-gain';
+                        displayGain = `$${gainArs.toFixed(2)}`;
+                    }
+
+                    return `
+                        <tr>
+                            <td>${new Date(transaction.date).toLocaleDateString()}</td>
+                            <td>${transaction.portfolioName}</td>
+                            <td><strong>${transaction.symbol}</strong></td>
+                            <td><span style="color: ${transaction.type === 'compra' ? '#10b981' : '#ef4444'}">${transaction.type.toUpperCase()}</span></td>
+                            <td>${transaction.price.toFixed(2)} ${priceTransactSymbol}</td>
+                            <td>${transaction.quantity}</td>
+                            <td>$${priceUnitArsLive.toFixed(2)}</td>
+                            <td>$${valueTotalArsLive.toFixed(2)}</td>
+                            <td class="${gainClass}">${displayGain}</td>
+                            <td><button class="btn btn-danger" onclick="deleteTransaction(${transaction.id})" style="padding: 5px 10px; font-size: 12px;">Eliminar</button></td>
+                        </tr>
+                    `;
+                }).join('');
         }
 
         function deleteTransaction(id) {
@@ -1238,6 +1498,7 @@
                 displayTransactions();
                 displayPortfolios();
                 calculateAndDisplaySummary();
+                displayHoldings(); // Actualizar tenencias
             }
         }
 
@@ -1263,7 +1524,8 @@
                 const portfolioSummary = await getPortfolioSummaryForAI();
                 const prompt = `Actúa como un asistente financiero experto. Aquí están los datos del portafolio del usuario: ${JSON.stringify(portfolioSummary)}. El usuario pregunta: "${userMessage}". Responde de manera concisa y útil. Evita frases como "Basado en tu portafolio..." y ve directo al punto.`;
                 
-                const aiResponse = await getAIResponse(prompt);
+                // Usando un modelo que no requiere API key para el chat para que funcione en el entorno
+                const aiResponse = await getAIResponse(prompt); 
                 loadingMessage.innerText = aiResponse;
             } catch (error) {
                 console.error("Error al obtener respuesta de la IA:", error);
@@ -1275,9 +1537,10 @@
 
         async function getAIResponse(prompt, retries = 3, delay = 1000) {
             const apiKey = "";
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
             const payload = {
-                contents: [{ role: "user", parts: [{ text: prompt }] }]
+                contents: [{ role: "user", parts: [{ text: prompt }] }],
+                tools: [{ "google_search": {} }],
             };
             
             for (let i = 0; i < retries; i++) {
@@ -1335,28 +1598,49 @@
                 if (!holdingSummary[t.symbol]) {
                     holdingSummary[t.symbol] = {
                         symbol: t.symbol,
+                        assetType: t.assetType,
+                        currency: t.currency,
                         quantity: 0,
-                        avgCost: 0,
-                        currentValue: 0
+                        totalCost: 0, // En ARS
                     };
                 }
-
+                
+                // Convertir todo a ARS para el contexto de la IA
+                const totalInArs = t.currency === 'ARS' ? t.total : convertCurrency(t.total, 'USD', 'ARS', 'mep');
+                
                 holdingSummary[t.symbol].quantity += sign * t.quantity;
-                // Costo promedio ponderado (simplificado)
-                holdingSummary[t.symbol].avgCost = 
-                    (holdingSummary[t.symbol].avgCost * (holdingSummary[t.symbol].quantity - sign * t.quantity) + t.total) / holdingSummary[t.symbol].quantity;
+                holdingSummary[t.symbol].totalCost += sign * totalInArs;
             });
+            
+            // Filtrar tenencias con cantidad > 0
+            const activeHoldings = Object.values(holdingSummary).filter(h => h.quantity > 0);
 
             // Añadir precios y valor actual a las tenencias
-            for (const symbol in holdingSummary) {
-                const price = livePrices[symbol] || 0;
-                const ratio = cedearsRatios[symbol] || 1;
-                const cedearPrice = price / ratio;
-                const currentPrice = holdingSummary[symbol].assetType === 'cedear' ? cedearPrice : price;
-                holdingSummary[symbol].currentValue = currentPrice * holdingSummary[symbol].quantity;
+            for (const holding of activeHoldings) {
+                const priceUsd = livePrices[holding.symbol] || 0;
+                const mepRate = dollarRates.mep ? (dollarRates.mep.venta || dollarRates.mep.compra || 1) : 1;
+                
+                let currentPriceArs = 0;
+                
+                if (holding.assetType === 'cedear') {
+                    const ratio = cedearsRatios[holding.symbol] || 1;
+                    // Precio en ARS del CEDEAR = (Precio subyacente USD / Ratio) * Tasa MEP
+                    currentPriceArs = (priceUsd / ratio) * mepRate;
+                } else {
+                    // Acción local: Precio ARS = Precio subyacente USD * Tasa MEP (simulado)
+                    currentPriceArs = priceUsd * mepRate;
+                }
+                
+                holding.avgCostArs = holding.totalCost / holding.quantity;
+                holding.currentValueArs = currentPriceArs * holding.quantity;
+                holding.currentPriceArs = currentPriceArs;
+                holding.currentPriceUsd = priceUsd;
+                holding.gainArs = holding.currentValueArs - holding.totalCost;
+                
+                delete holding.totalCost; // Limpiar para un resumen más limpio
             }
 
-            return Object.values(holdingSummary);
+            return activeHoldings;
         }
 
         function appendMessage(sender, text) {
@@ -1418,6 +1702,7 @@
                             displayPortfolios();
                             updatePortfolioSelects();
                             calculateAndDisplaySummary();
+                            displayHoldings(); // Actualizar tenencias
                             showCustomAlert('Datos importados exitosamente');
                         }
                     } else {
@@ -1442,15 +1727,28 @@
 
         // Inicialización
         function init() {
+            // Cargar cotizaciones y refrescar cada 5 minutos
             loadDollarRates();
-            setInterval(loadDollarRates, 5 * 60 * 1000);
+            setInterval(loadDollarRates, 5 * 60 * 1000); 
+            
+            // Establecer la fecha actual en el formulario
             document.getElementById('transactionDate').valueAsDate = new Date();
+            
+            // Mostrar portafolios y calcular resumen
             displayPortfolios();
-            updatePortfolioSelects();
-            if (portfolios.length === 0) {
-                document.querySelector('.nav-tab').click();
-            } else {
+            
+            // 5. Check and display banner
+            if (localStorage.getItem('bannerDismissed') !== 'true') {
+                document.getElementById('topBanner').style.display = 'flex';
+            }
+
+            // Si hay portafolios, calcular el resumen y las tenencias
+            if (portfolios.length > 0) {
                 calculateAndDisplaySummary();
+                displayHoldings();
+            } else {
+                // Si no hay portafolios, asegurarse de que la primera pestaña esté activa
+                document.querySelector('.nav-tab').click();
             }
         }
 
@@ -1521,3 +1819,4 @@
     </script>
 </body>
 </html>
+
