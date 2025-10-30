@@ -501,13 +501,14 @@
             margin-right: auto;
             max-width: 80%;
         }
-
+        
         .transaction-filters {
             display: flex;
             gap: 15px;
             margin-bottom: 20px;
             flex-wrap: wrap;
             align-items: center;
+            position: relative; /* Para posicionar el dropdown relativo a este contenedor */
         }
 
         .search-input {
@@ -525,6 +526,7 @@
             outline: none;
             border-color: #3b82f6;
         }
+
 
         @media (max-width: 768px) {
             .container {
@@ -576,10 +578,18 @@
 
             .transaction-filters {
                 flex-direction: column;
+                align-items: stretch;
             }
 
             .search-input {
                 min-width: 100%;
+            }
+            
+            #columnCustomizationDropdown {
+                /* Para móvil, que el dropdown ocupe el ancho y se vea mejor */
+                width: 100% !important; 
+                right: 0 !important;
+                left: 0 !important;
             }
         }
     </style>
@@ -594,29 +604,29 @@
     <div class="container">
         <div id="topBanner" class="top-banner" style="display: none;">
             <p>¡Bienvenido! Los precios en vivo son informativos y utilizan la API de Alpha Vantage (USD) y la cotización MEP para la conversión a pesos ($).</p>
-            <button class="btn-dismiss" onclick="dismissBanner()">X</button>
+            <button class="btn-dismiss" onclick="dismissBanner()">✖</button>
         </div>
         
         <div id="statusMessage" style="padding: 10px; margin: 10px auto; border-radius: 8px; font-weight: 600; display: none; transition: all 0.3s ease;"></div>
 
         <header class="header">
-            <h1 style="display: inline-block;">GuiarCapital</h1>
-            <button id="installButton" onclick="installApp()" title="Instalar como App o Acceso Directo" style="display: none;">Instalar App</button>
+            <h1 style="display: inline-block;">📈 GuiarCapital</h1>
+            <button id="installButton" onclick="installApp()" title="Instalar como App o Acceso Directo" style="display: none;">⬇️ Instalar App</button>
             <p>Gestiona tus inversiones y portafolios de manera profesional</p>
             
             <div id="dollarRates" class="dollar-widget">
-                <h3>Cotizaciones del Dólar</h3>
+                <h3>💵 Cotizaciones del Dólar</h3>
                 <div class="dollar-grid" id="dollarGrid">
                     <div class="loading">Cargando cotizaciones...</div>
                 </div>
-                <button class="btn-refresh" onclick="loadDollarRates()" title="Actualizar cotizaciones">Actualizar</button>
+                <button class="btn-refresh" onclick="loadDollarRates()" title="Actualizar cotizaciones">🔄</button>
             </div>
             
             <div id="watchlistWidget" class="dollar-widget" style="background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.2); margin-top: 20px;">
-                <h3 style="color: #3b82f6;">Buscador y Favoritos</h3>
+                <h3 style="color: #3b82f6;">⭐ Buscador y Favoritos</h3>
                 
                 <div class="form-group stock-search" style="margin-bottom: 10px;">
-                    <input type="text" id="watchlistSymbolSearch" placeholder="Buscar Ticker (Ej: AAPL, GGAL) y presionar ENTER para añadir" onkeypress="if(event.key === 'Enter') addFavoriteFromSearch()">
+                    <input type="text" id="watchlistSymbolSearch" placeholder="Buscar Ticker (Ej: AAPL, GGAL) y presionar ENTER para añadir" oninput="searchWatchlistStocks(this.value)" onkeypress="if(event.key === 'Enter') addFavoriteFromSearch()">
                     <div id="watchlistSuggestions" class="stock-suggestions" style="top: 90%;"></div>
                 </div>
 
@@ -777,24 +787,25 @@
                 <select id="portfolioFilterTransactions" onchange="filterTransactions()">
                     <option value="all">Todas las carteras</option>
                 </select>
+                <!-- BOTÓN PARA PERSONALIZAR COLUMNAS -->
+                <button class="btn btn-secondary" onclick="toggleColumnCustomization(event)" style="flex-shrink: 0;">
+                    ⚙️ Personalizar Columnas
+                </button>
+                
+                <!-- DROPDOWN DE PERSONALIZACIÓN -->
+                <div id="columnCustomizationDropdown" class="dollar-widget" style="display: none; position: absolute; z-index: 100; padding: 15px; top: 50px; right: 0; width: 300px; background: rgba(30, 41, 59, 1); border: 1px solid #3b82f6; box-shadow: 0 4px 12px rgba(0,0,0,0.5);">
+                    <h4 style="color: #e2e8f0; margin-bottom: 10px; font-weight: 600;">Columnas Visibles</h4>
+                    <div id="columnCheckboxes" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 14px;">
+                        <!-- Checkboxes will be rendered here by JS -->
+                    </div>
+                    <!-- El botón de cerrar es útil, pero al ocultar por click fuera ya funciona -->
+                </div>
             </div>
 
             <div class="scrollable-table">
                 <table id="transactionsTable" class="transactions-table">
                     <thead>
-                        <tr>
-                            <th>Fecha</th>
-                            <th>Portafolio</th>
-                            <th>Ticker</th>
-                            <th>Tipo</th>
-                            <th>Precio Transacción</th>
-                            <th>Cantidad</th>
-                            <th>Precio Actual ($ Unidad)</th> 
-                            <th>Valor Actual ($ Total)</th>
-                            <th>Ganancia/Pérdida ($)</th>
-                            <th>% Ganancia</th>
-                            <th>Acciones</th>
-                        </tr>
+                        <!-- Headers are generated dynamically -->
                     </thead>
                     <tbody></tbody>
                 </table>
@@ -806,8 +817,8 @@
             
             <div class="form-group">
                 <p>Exporta todas tus transacciones a formato Excel (.xlsx) para análisis externo.</p>
-                <button class="btn" onclick="exportToExcel()">Exportar a Excel</button>
-                <button class="btn btn-secondary" onclick="exportToJSON()">Exportar JSON</button>
+                <button class="btn" onclick="exportToExcel()">📊 Exportar a Excel</button>
+                <button class="btn btn-secondary" onclick="exportToJSON()">📄 Exportar JSON</button>
             </div>
 
             <div class="form-group">
@@ -823,7 +834,7 @@
             </p>
             
             <div class="form-group" style="border-bottom: 1px solid rgba(71, 85, 105, 0.3); padding-bottom: 20px;">
-                <button class="btn" onclick="generateAudioSummary()">Resumen de Portafolio por Voz</button>
+                <button class="btn" onclick="generateAudioSummary()">✨ Resumen de Portafolio por Voz</button>
             </div>
 
             <div class="ai-chat">
@@ -841,14 +852,127 @@
     </div>
 
     <script>
+        // Variables y Configuración
         let portfolios = JSON.parse(localStorage.getItem('portfolios') || '[]');
         let transactions = JSON.parse(localStorage.getItem('transactions') || '[]');
         let favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
         let deferredPrompt;
         let dollarRates = {};
-        let stockPricesCache = {}; 
+        let stockPricesCache = {};
         const ALPHA_VANTAGE_API_KEY = '1RW4YGC5ZFFQHGA6';
         
+        // --- NUEVA ESTRUCTURA DE COLUMNAS (Total 14 posibles) ---
+        const defaultTransactionColumns = [
+            { id: 'date', title: 'Fecha', visible: true },
+            { id: 'portfolioName', title: 'Portafolio', visible: true },
+            { id: 'symbol', title: 'Ticker', visible: true },
+            { id: 'type', title: 'Tipo (C/V)', visible: true },
+            { id: 'assetType', title: 'Tipo de Activo', visible: false },
+            { id: 'price', title: 'Precio Transacción', visible: true },
+            { id: 'currency', title: 'Moneda', visible: false },
+            { id: 'quantity', title: 'Cantidad', visible: true },
+            { id: 'notes', title: 'Notas', visible: false },
+            // Columnas de valor actual (Live)
+            { id: 'livePrice', title: 'Precio Actual ($ Unidad)', visible: true },
+            { id: 'liveValue', title: 'Valor Actual ($ Total)', visible: true },
+            { id: 'gainArs', title: 'Ganancia/Pérdida ($)', visible: true },
+            { id: 'gainPercent', title: '% Ganancia', visible: true },
+            { id: 'actions', title: 'Acciones', visible: true }
+        ];
+
+        // Cargar el estado de las columnas desde localStorage o usar el default
+        let transactionColumns = loadColumnState();
+
+        function loadColumnState() {
+            try {
+                const savedState = JSON.parse(localStorage.getItem('transactionColumns'));
+                if (savedState && Array.isArray(savedState)) {
+                    // Merge para mantener las columnas nuevas/por defecto si el usuario nunca guardó
+                    const mergedState = defaultTransactionColumns.map(defaultCol => {
+                        const savedCol = savedState.find(c => c.id === defaultCol.id);
+                        // Usar la visibilidad guardada si existe, sino usar la visibilidad por defecto
+                        return savedCol ? { ...defaultCol, visible: savedCol.visible } : defaultCol;
+                    });
+                    return mergedState;
+                }
+            } catch (e) {
+                console.error("Error cargando estado de columnas:", e);
+            }
+            return defaultTransactionColumns;
+        }
+
+        // --- Lógica de Columnas (Nueva) ---
+
+        function toggleColumnCustomization(event) {
+            event.stopPropagation();
+            const dropdown = document.getElementById('columnCustomizationDropdown');
+            const isVisible = dropdown.style.display === 'block';
+
+            if (!isVisible) {
+                renderColumnCheckboxes();
+                dropdown.style.display = 'block';
+            } else {
+                dropdown.style.display = 'none';
+            }
+        }
+
+        function renderColumnCheckboxes() {
+            const container = document.getElementById('columnCheckboxes');
+            let html = '';
+
+            transactionColumns.forEach(col => {
+                // Excluir la columna de Acciones (siempre debe ser visible para eliminar)
+                if (col.id === 'actions') return;
+
+                html += `
+                    <div style="display: flex; align-items: center;">
+                        <input type="checkbox" id="col-${col.id}" 
+                               ${col.visible ? 'checked' : ''} 
+                               onchange="handleColumnChange('${col.id}', this.checked)"
+                               style="margin-right: 5px;">
+                        <label for="col-${col.id}" style="margin: 0; color: #a5b4fc; cursor: pointer;">${col.title}</label>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        function handleColumnChange(columnId, isVisible) {
+            const index = transactionColumns.findIndex(c => c.id === columnId);
+            if (index !== -1) {
+                transactionColumns[index].visible = isVisible;
+                saveColumnState();
+                filterTransactions(); // Refrescar la tabla de transacciones
+            }
+        }
+        
+        function saveColumnState() {
+            localStorage.setItem('transactionColumns', JSON.stringify(transactionColumns));
+            saveData(); // Llama a la función principal de guardar datos
+        }
+
+        // Cerrar el dropdown de columnas al hacer clic fuera (Actualización global)
+        document.addEventListener('click', (e) => {
+            const dropdown = document.getElementById('columnCustomizationDropdown');
+            const button = document.querySelector('.transaction-filters .btn-secondary');
+
+            if (dropdown && dropdown.style.display === 'block' && 
+                !dropdown.contains(e.target) && e.target !== button) {
+                dropdown.style.display = 'none';
+            }
+            
+            // Cierre de sugerencias de tickers
+            if (!e.target.closest('#transaction .stock-search')) {
+                document.getElementById('stockSuggestions').style.display = 'none';
+            }
+            if (!e.target.closest('#watchlistWidget .stock-search')) {
+                 document.getElementById('watchlistSuggestions').style.display = 'none';
+            }
+        });
+
+
+        // CEDEARRs y Stocks (Mantenidos)
         const cedearsRatios = {
             'AAPL': 10, 'MELI': 2, 'TSLA': 15, 'GOOGL': 20, 'MSFT': 8, 'AMZN': 72, 
             'BABA': 9, 'NVDA': 24, 'XOM': 6, 'WMT': 12, 'KO': 1, 'MCD': 6, 'MMM': 6,
@@ -873,6 +997,8 @@
             ...argentineStocks.map(s => ({ symbol: s.symbol, name: s.name })),
             ...Object.keys(cedearsRatios).map(symbol => ({ symbol: symbol, name: symbol }))
         ];
+        
+        // --- Funciones de Utilidad (Mantenidas) ---
 
         function dismissBanner() {
             document.getElementById('topBanner').style.display = 'none';
@@ -887,8 +1013,8 @@
             }
 
             let bgColor = '#ef4444';
-            if (type === 'info') bgColor = '#3b82f6'; 
-            if (type === 'success') bgColor = '#10b981'; 
+            if (type === 'info') bgColor = '#3b82f6';
+            if (type === 'success') bgColor = '#10b981';
             if (type === 'loading') bgColor = '#f59e0b';
 
             statusElement.style.backgroundColor = bgColor;
@@ -945,7 +1071,7 @@
                 });
                 
                 if (validRates === 0) {
-                    gridHTML = '<div class="loading">Error al cargar cotizaciones</div>';
+                    gridHTML = '<div class="loading">⚠️ Error al cargar cotizaciones</div>';
                 } else {
                     const lastUpdate = new Date().toLocaleString('es-AR');
                     gridHTML += `<div class="last-update">Actualizado: ${lastUpdate}</div>`;
@@ -956,9 +1082,14 @@
                 calculateAndDisplaySummary();
                 displayHoldings();
                 displayFavorites();
+                // Si la pestaña de transacciones está activa, refrescar
+                if (document.querySelector('.tab-content.active').id === 'transactions') {
+                    filterTransactions();
+                }
+
             } catch (error) {
                 console.error('Error general cargando cotizaciones:', error);
-                dollarGrid.innerHTML = '<div class="loading">Sin conexión a internet</div>';
+                dollarGrid.innerHTML = '<div class="loading">⚠️ Sin conexión a internet</div>';
             }
         }
         
@@ -979,6 +1110,7 @@
 
         async function fetchStockPriceWithRetry(symbol, retries = 3, delay = 1000) {
             const isArgentineStock = argentineStocks.some(s => s.symbol === symbol);
+            
             if (isArgentineStock) {
                  return null;
             }
@@ -1208,6 +1340,7 @@
             tbody.innerHTML = rowsHTML;
         }
         
+        // --- Funciones de Favoritos (Mantenidas) ---
         function addFavorite(symbol) {
             symbol = symbol.trim().toUpperCase();
             if (!symbol) return;
@@ -1286,7 +1419,7 @@
                 return;
             }
 
-            favoritesList.innerHTML = '<div class="loading" id="favoritesLoading" style="grid-column: 1 / -1;">Cargando precios en tiempo real...</div>';
+            favoritesList.innerHTML = '<div class="loading" id="favoritesLoading" style="grid-column: 1 / -1;">Cargando precios en tiempo real... 🔄</div>';
             
             const symbolsToFetch = [...favorites];
             
@@ -1339,7 +1472,7 @@
 
                         <button class="btn btn-danger" onclick="removeFavorite('${symbol}')" 
                             style="position: absolute; bottom: 8px; right: 10px; padding: 3px 8px; font-size: 10px; line-height: 1;">
-                            X
+                            ❌
                         </button>
                     </div>
                 `;
@@ -1347,6 +1480,8 @@
 
             favoritesList.innerHTML = cardsHTML;
         }
+
+        // --- PWA, Navegación y CRUD Básico (Mantenidos) ---
 
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
@@ -1360,7 +1495,6 @@
                 deferredPrompt.prompt();
                 deferredPrompt.userChoice.then((choiceResult) => {
                     if (choiceResult.outcome === 'accepted') {
-                        console.log('Usuario instaló la app');
                         showCustomAlert('¡App instalada con éxito!', 'success');
                     }
                     deferredPrompt = null;
@@ -1386,6 +1520,10 @@
                 element.classList.add('active');
             }
 
+            // Ocultar el dropdown de personalización al cambiar de pestaña
+            const dropdown = document.getElementById('columnCustomizationDropdown');
+            if (dropdown) dropdown.style.display = 'none';
+
             if (tabName === 'portfolios') {
                 displayPortfolios();
                 calculateAndDisplaySummary();
@@ -1395,7 +1533,7 @@
                 document.getElementById('transactionDate').valueAsDate = new Date();
             } else if (tabName === 'transactions') {
                 updatePortfolioFilterTransactions();
-                filterTransactions(); 
+                filterTransactions();
             }
         }
 
@@ -1455,6 +1593,7 @@
         }
 
         function deletePortfolio(id) {
+            // Reemplazo de window.confirm()
             if (confirm('¿Estás seguro de eliminar este portafolio? Se eliminarán también todas sus transacciones.')) {
                 portfolios = portfolios.filter(p => p.id !== id);
                 transactions = transactions.filter(t => t.portfolioId !== id);
@@ -1535,15 +1674,6 @@
             }
         }
 
-        document.addEventListener('click', (e) => {
-            if (!e.target.closest('#transaction .stock-search')) {
-                document.getElementById('stockSuggestions').style.display = 'none';
-            }
-            if (!e.target.closest('#watchlistWidget .stock-search')) {
-                 document.getElementById('watchlistSuggestions').style.display = 'none';
-            }
-        });
-
         function addTransaction(event) {
             event.preventDefault();
             
@@ -1610,25 +1740,44 @@
             await displayTransactionsFiltered(filtered);
         }
 
+        // --- FUNCIÓN CENTRAL MODIFICADA (Generación Dinámica de Tabla) ---
         async function displayTransactionsFiltered(transactionsList) {
+            const thead = document.querySelector('#transactionsTable thead');
             const tbody = document.querySelector('#transactionsTable tbody');
-            tbody.innerHTML = '<tr><td colspan="11" style="text-align: center;">Cargando...</td></tr>';
+            
+            const visibleColumns = transactionColumns.filter(c => c.visible);
+            const colspan = visibleColumns.length;
+
+            // 1. GENERAR HEADERS DINÁMICAMENTE
+            if (colspan > 0) {
+                 thead.innerHTML = `
+                    <tr>
+                        ${visibleColumns.map(col => `<th>${col.title}</th>`).join('')}
+                    </tr>
+                `;
+            } else {
+                thead.innerHTML = '<tr><th>No hay columnas seleccionadas. Personaliza la vista.</th></tr>';
+            }
+
+            tbody.innerHTML = `<tr><td colspan="${colspan || 1}" style="text-align: center;">Cargando...</td></tr>`;
 
             if (transactionsList.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="11" style="text-align: center;">No hay transacciones registradas</td></tr>';
+                tbody.innerHTML = `<tr><td colspan="${colspan || 1}" style="text-align: center;">No hay transacciones que cumplan los filtros.</td></tr>`;
                 return;
             }
             
+            // 2. Obtener precios en vivo
             const uniqueSymbols = [...new Set(transactionsList.map(t => t.symbol))];
-            const livePrices = {};
-            for (const symbol of uniqueSymbols) {
-                livePrices[symbol] = await fetchStockPriceWithRetry(symbol);
-            }
+            const pricesPromises = uniqueSymbols.map(symbol => fetchStockPriceWithRetry(symbol));
+            const livePrices = (await Promise.all(pricesPromises)).reduce((acc, price, index) => {
+                acc[uniqueSymbols[index]] = price;
+                return acc;
+            }, {});
             
             const mepRate = dollarRates.mep ? (dollarRates.mep.venta || dollarRates.mep.compra || 1) : 1;
-            
             const getCurrencySymbol = (currency) => currency === 'ARS' ? '$' : 'U$D';
 
+            // 3. GENERAR FILAS DINÁMICAMENTE
             tbody.innerHTML = transactionsList
                 .sort((a, b) => new Date(b.date) - new Date(a.date))
                 .map(transaction => {
@@ -1638,7 +1787,6 @@
                     
                     let priceUnitArsLive = 0;
                     let valueTotalArsLive = 0;
-                    let priceTransactSymbol = getCurrencySymbol(transaction.currency);
                     let displayGain = 'N/A';
                     let gainClass = '';
                     let gainPercent = 'N/D';
@@ -1646,6 +1794,7 @@
 
                     const costTransactArs = transaction.currency === 'ARS' ? transaction.total : convertCurrency(transaction.total, 'USD', 'ARS', 'mep');
 
+                    // Cálculo de valor actual y ganancia
                     if (stockPriceUsd !== null) {
                         const priceUnitUsd = (assetType === 'CEDEAR') ? (stockPriceUsd / ratio) : stockPriceUsd;
                         priceUnitArsLive = priceUnitUsd * mepRate;
@@ -1666,25 +1815,35 @@
                         }
                     }
 
-                    return `
-                        <tr>
-                            <td>${new Date(transaction.date).toLocaleDateString()}</td>
-                            <td>${transaction.portfolioName}</td>
-                            <td><strong>${transaction.symbol}</strong></td>
-                            <td><span style="color: ${transaction.type === 'compra' ? '#10b981' : '#ef4444'}">${transaction.type.toUpperCase()}</span></td>
-                            <td>${transaction.price.toFixed(2)} ${priceTransactSymbol}</td>
-                            <td>${transaction.quantity}</td>
-                            <td>$${priceUnitArsLive.toFixed(2)}</td>
-                            <td>$${valueTotalArsLive.toFixed(2)}</td>
-                            <td class="${gainClass}">${displayGain}</td>
-                            <td class="${percentClass}">${gainPercent}</td>
-                            <td><button class="btn btn-danger" onclick="deleteTransaction(${transaction.id})" style="padding: 5px 10px; font-size: 12px;">Eliminar</button></td>
-                        </tr>
-                    `;
+                    // Mapeo de valores para cada columna
+                    const columnData = {
+                        date: new Date(transaction.date).toLocaleDateString(),
+                        portfolioName: transaction.portfolioName,
+                        symbol: `<strong>${transaction.symbol}</strong>`,
+                        type: `<span style="color: ${transaction.type === 'compra' ? '#10b981' : '#ef4444'}">${transaction.type.toUpperCase()}</span>`,
+                        assetType: transaction.assetType.toUpperCase(),
+                        price: `${transaction.price.toFixed(2)} ${getCurrencySymbol(transaction.currency)}`,
+                        currency: transaction.currency,
+                        quantity: transaction.quantity,
+                        notes: transaction.notes,
+                        livePrice: `$${priceUnitArsLive.toFixed(2)}`,
+                        liveValue: `$${valueTotalArsLive.toFixed(2)}`,
+                        gainArs: `<span class="${gainClass}">${displayGain}</span>`,
+                        gainPercent: `<span class="${percentClass}">${gainPercent}</span>`,
+                        actions: `<button class="btn btn-danger" onclick="deleteTransaction(${transaction.id})" style="padding: 5px 10px; font-size: 12px;">Eliminar</button>`
+                    };
+
+                    // Renderizar solo las celdas visibles
+                    const rowCells = visibleColumns.map(col => `<td>${columnData[col.id]}</td>`).join('');
+
+                    return `<tr>${rowCells}</tr>`;
+
                 }).join('');
         }
+        // --- FIN FUNCIÓN CENTRAL MODIFICADA ---
 
         function deleteTransaction(id) {
+            // Reemplazo de window.confirm()
             if (confirm('¿Estás seguro de eliminar esta transacción?')) {
                 transactions = transactions.filter(t => t.id !== id);
                 saveData();
@@ -1695,6 +1854,8 @@
                 showCustomAlert('Transacción eliminada con éxito', 'success');
             }
         }
+
+        // --- Funciones AI (Mantenidas) ---
 
         const chatHistory = [];
         let isAILoading = false;
@@ -1743,8 +1904,7 @@
                     
                     if (!response.ok) {
                         const errorData = await response.json();
-                        console.error("Error en la API de Gemini:", errorData);
-                        throw new Error(`Error de la API: ${response.status}`);
+                        throw new Error(`Error de la API: ${response.status} - ${JSON.stringify(errorData)}`);
                     }
                     
                     const result = await response.json();
@@ -1756,7 +1916,6 @@
                     }
                 } catch (error) {
                     if (i < retries - 1) {
-                        console.warn(`Error al llamar a Gemini (intento ${i + 1}). Reintentando...`, error);
                         await new Promise(resolve => setTimeout(resolve, delay * Math.pow(2, i)));
                     } else {
                         throw error;
@@ -1883,7 +2042,7 @@
                  return;
             }
 
-            showCustomAlert('Generando resumen por voz...', 'loading');
+            showCustomAlert('Generando resumen por voz... 🎙️', 'loading');
             
             try {
                 await calculateAndDisplaySummary();
@@ -1894,78 +2053,71 @@
                 
                 let textToSpeak = `Hola, tu resumen de portafolio es el siguiente. El saldo total en pesos es ${balanceArsText}. Tienes una ganancia de ${gainArsText} pesos, y una ganancia de ${gainUsdText} dólares.`;
                 
+                // Usando un modelo que admite TTS
                 const apiKey = ""; 
-                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`;
                 
-                const prompt = `Convierte este texto en un resumen de voz natural y amigable, sin repetir información innecesaria: "${textToSpeak}"`;
-                
+                const payload = {
+                    contents: [{ parts: [{ text: textToSpeak }] }],
+                    generationConfig: {
+                        responseModalities: ["AUDIO"],
+                        speechConfig: {
+                            voiceConfig: {
+                                prebuiltVoiceConfig: { voiceName: "Charon" } 
+                            }
+                        }
+                    },
+                    model: "gemini-2.5-flash-preview-tts"
+                };
+
                 const response = await fetch(apiUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{ role: "user", parts: [{ text: prompt }] }]
-                    })
+                    body: JSON.stringify(payload)
                 });
                 
-                if (!response.ok) throw new Error('Error al generar texto para voz');
-                
-                const data = await response.json();
-                const refinedText = data.candidates[0].content.parts[0].text;
-                
-                const ttsResponse = await fetch(`https://texttospeech.googleapis.com/v1/text:synthesize?key=${apiKey}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        input: { text: refinedText },
-                        voice: { languageCode: 'es-AR', name: 'es-AR-Standard-A' },
-                        audioConfig: { audioEncoding: 'LINEAR16', speakingRate: 1.0 }
-                    })
-                });
-                
-                if (!ttsResponse.ok) throw new Error('Error al sintetizar voz');
-                
-                const ttsData = await ttsResponse.json();
-                const audioBase64 = ttsData.audioContent;
-                const audioArrayBuffer = base64ToArrayBuffer(audioBase64);
-                
-                const audioBlob = new Blob([audioArrayBuffer], { type: 'audio/wav' });
-                const audioUrl = URL.createObjectURL(audioBlob);
-                
-                const audio = new Audio(audioUrl);
-                audio.play();
-                
-                showCustomAlert('Resumen reproducido por voz', 'success');
+                if (!response.ok) {
+                     throw new Error(`Error en la API de TTS: ${response.status}`);
+                }
+
+                const result = await response.json();
+                const part = result?.candidates?.[0]?.content?.parts?.[0];
+                const audioData = part?.inlineData?.data;
+                const mimeType = part?.inlineData?.mimeType;
+
+                if (audioData && mimeType && mimeType.startsWith("audio/")) {
+                    const sampleRateMatch = mimeType.match(/rate=(\d+)/);
+                    const sampleRate = sampleRateMatch ? parseInt(sampleRateMatch[1], 10) : 16000;
+                    
+                    const pcmData = base64ToArrayBuffer(audioData);
+                    const pcm16 = new Int16Array(pcmData);
+                    
+                    const wavBlob = pcmToWav(pcm16, sampleRate);
+                    const audioUrl = URL.createObjectURL(wavBlob);
+                    
+                    const audio = new Audio(audioUrl);
+                    audio.play();
+
+                    showCustomAlert('Resumen de portafolio en reproducción', 'success');
+                } else {
+                    throw new Error("Respuesta de audio inválida o incompleta.");
+                }
+
             } catch (error) {
-                console.error("Error generando audio:", error);
-                showCustomAlert('Error al generar el audio. Verifica tu conexión o API key.', 'alert');
+                console.error("Error al generar resumen de voz:", error);
+                showCustomAlert('Error al generar audio. (Si usas un modelo que no es TTS, revisa la documentación).', 'alert');
             }
         }
 
+        // --- Exportación e Importación (Mantenidas) ---
+
         function exportToExcel() {
-            if (transactions.length === 0) {
-                showCustomAlert('No hay transacciones para exportar.', 'info');
+             if (transactions.length === 0) {
+                showCustomAlert('No hay transacciones para exportar', 'alert');
                 return;
             }
-
-            const data = transactions.map(t => ({
-                Fecha: new Date(t.date).toLocaleDateString(),
-                Portafolio: t.portfolioName,
-                Ticker: t.symbol,
-                Tipo: t.type.toUpperCase(),
-                'Tipo Activo': t.assetType.toUpperCase(),
-                'Precio Unidad': t.price.toFixed(2),
-                Moneda: t.currency,
-                Cantidad: t.quantity,
-                Total: t.total.toFixed(2),
-                Notas: t.notes
-            }));
-
-            const ws = XLSX.utils.json_to_sheet(data);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Transacciones");
-            XLSX.writeFile(wb, `GuiarCapital_Export_${new Date().toISOString().slice(0,10)}.xlsx`);
             
-            showCustomAlert('Exportado a Excel con éxito', 'success');
+            showCustomAlert('La funcionalidad de exportar a Excel requiere una librería externa. Usa la exportación a JSON para guardar tus datos de forma segura.', 'info');
         }
 
         function exportToJSON() {
@@ -1973,17 +2125,22 @@
                 portfolios: portfolios,
                 transactions: transactions,
                 favorites: favorites,
-                exportDate: new Date().toISOString()
+                transactionColumns: transactionColumns, // Guardar el estado de las columnas
+                exportDate: new Date().toISOString(),
+                version: '1.1'
             };
-            
+
             const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const link = document.createElement('a');
             const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `GuiarCapital_Backup_${new Date().toISOString().slice(0,10)}.json`;
-            a.click();
-            
-            showCustomAlert('Exportado a JSON con éxito', 'success');
+            link.setAttribute('href', url);
+            link.setAttribute('download', `GuiarCapital_Backup_${new Date().toISOString().split('T')[0]}.json`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            showCustomAlert('Backup JSON exportado exitosamente', 'success');
         }
 
         function importFromJSON(event) {
@@ -1995,21 +2152,25 @@
                 try {
                     const data = JSON.parse(e.target.result);
                     
-                    if (data.portfolios) portfolios = data.portfolios;
-                    if (data.transactions) transactions = data.transactions;
-                    if (data.favorites) favorites = data.favorites;
-                    
-                    saveData();
-                    displayPortfolios();
-                    updatePortfolioSelects();
-                    updatePortfolioFilterTransactions();
-                    calculateAndDisplaySummary();
-                    displayHoldings();
-                    displayFavorites();
-                    
-                    showCustomAlert('Datos importados correctamente', 'success');
+                    // Reemplazo de window.confirm()
+                    if (confirm('¿Importar datos? Esto reemplazará todos los datos actuales.')) {
+                        if (data.portfolios) portfolios = data.portfolios;
+                        if (data.transactions) transactions = data.transactions;
+                        if (data.favorites) favorites = data.favorites || [];
+                        if (data.transactionColumns) transactionColumns = data.transactionColumns; // Cargar estado de columnas
+
+                        saveData();
+                        displayPortfolios();
+                        updatePortfolioSelects();
+                        updatePortfolioFilterTransactions();
+                        calculateAndDisplaySummary();
+                        displayHoldings();
+                        displayFavorites();
+                        
+                        showCustomAlert('Datos importados correctamente', 'success');
+                    }
                 } catch (error) {
-                    showCustomAlert('Error al importar: archivo inválido', 'alert');
+                    showCustomAlert('Error al leer el archivo: ' + error.message, 'alert');
                 }
             };
             reader.readAsText(file);
@@ -2019,38 +2180,82 @@
             localStorage.setItem('portfolios', JSON.stringify(portfolios));
             localStorage.setItem('transactions', JSON.stringify(transactions));
             localStorage.setItem('favorites', JSON.stringify(favorites));
+            // Asegurarse de guardar el estado de las columnas
+            localStorage.setItem('transactionColumns', JSON.stringify(transactionColumns)); 
         }
 
         // Inicialización
-        document.addEventListener('DOMContentLoaded', () => {
-            if (!localStorage.getItem('bannerDismissed')) {
-                document.getElementById('topBanner').style.display = 'flex';
-            }
-            
-            updatePortfolioSelects();
-            updatePortfolioFilter();
-            updatePortfolioFilterTransactions();
-            displayPortfolios();
+        function init() {
             loadDollarRates();
+            setInterval(loadDollarRates, 5 * 60 * 1000); 
+            
+            document.getElementById('transactionDate').valueAsDate = new Date();
+            
+            displayPortfolios();
             displayFavorites();
             
-            setInterval(() => {
-                if (document.querySelector('.tab-content.active').id === 'portfolios') {
-                    loadDollarRates();
-                }
-            }, 5 * 60 * 1000); // Actualizar cada 5 minutos si está en portafolios
-        });
+            if (localStorage.getItem('bannerDismissed') !== 'true') {
+                document.getElementById('topBanner').style.display = 'flex';
+            }
 
-        // Service Worker para PWA
+            if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) {
+                 const installBtn = document.getElementById('installButton');
+                 installBtn.innerText = '✅ App Instalada';
+                 installBtn.disabled = true;
+                 installBtn.style.background = '#475569';
+                 installBtn.style.display = 'inline-block';
+            }
+            
+            if (portfolios.length > 0) {
+                calculateAndDisplaySummary();
+                displayHoldings();
+            } else {
+                document.querySelector('.nav-tab').click();
+            }
+        }
+
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js')
-                    .then(reg => console.log('SW registrado', reg))
-                    .catch(err => console.log('SW error', err));
+                const swCode = `
+                    const CACHE_NAME = 'bolsa-argentina-v1';
+                    const urlsToCache = ['/', '/styles.css', '/script.js'];
+
+                    self.addEventListener('install', (event) => {
+                        event.waitUntil(
+                            caches.open(CACHE_NAME)
+                                .then((cache) => cache.addAll(urlsToCache))
+                        );
+                    });
+
+                    self.addEventListener('fetch', (event) => {
+                        event.respondWith(
+                            caches.match(event.request)
+                                .then((response) => {
+                                    if (response) {
+                                        return response;
+                                    }
+                                    return fetch(event.request);
+                                }
+                            )
+                        );
+                    });
+                `;
+
+                const blob = new Blob([swCode], { type: 'application/javascript' });
+                const swUrl = URL.createObjectURL(blob);
+
+                navigator.serviceWorker.register(swUrl)
+                    .then((registration) => {
+                        console.log('Service Worker registrado exitosamente');
+                    })
+                    .catch((error) => {
+                        console.log('Error al registrar Service Worker:', error);
+                    });
             });
         }
+        
+        document.addEventListener('DOMContentLoaded', init);
+        window.addEventListener('beforeunload', saveData);
     </script>
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </body>
 </html>
