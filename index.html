@@ -45,23 +45,49 @@
             display: inline-block;
         }
         
-        #installButton {
+        /* Estilos para los nuevos botones de encabezado */
+        .header-buttons {
+            margin-top: 15px;
+            margin-bottom: 10px; /* Espacio entre los botones y el siguiente contenido */
+            display: flex;
+            justify-content: center;
+            gap: 10px; /* Espacio entre los botones */
+            flex-wrap: wrap; /* Para que se ajusten en pantallas pequeñas */
+        }
+
+        .header-button {
             background: #10b981;
             color: white;
-            padding: 5px 10px;
+            padding: 8px 15px;
             border-radius: 5px;
-            font-size: 14px;
+            font-size: 15px;
             font-weight: 500;
             cursor: pointer;
             border: none;
-            margin-left: 10px;
             transition: background 0.2s;
+            display: inline-flex; /* Para alinear el icono y el texto */
+            align-items: center;
+            gap: 5px; /* Espacio entre icono y texto */
         }
 
-        #installButton:hover {
+        .header-button:hover:not(:disabled) {
             background: #059669;
         }
         
+        .header-button:disabled {
+            background: #475569;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        #shareButton {
+            background: #6b7280; /* Un color secundario para el botón de compartir */
+        }
+
+        #shareButton:hover:not(:disabled) {
+            background: #4b5563;
+        }
+
         #statusMessage {
             padding: 10px; 
             margin: 10px auto; 
@@ -72,7 +98,7 @@
             max-width: 600px;
         }
 
-        .top-banner {
+        .top-banner { /* Este estilo ya no se usará, pero lo dejo por si acaso */
             background: #f59e0b;
             color: #1e293b;
             padding: 15px 20px;
@@ -85,7 +111,7 @@
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
         }
 
-        .btn-dismiss {
+        .btn-dismiss { /* Este estilo ya no se usará */
             background: transparent;
             border: none;
             color: #1e293b;
@@ -415,7 +441,7 @@
             font-weight: 600;
         }
 
-        .install-prompt {
+        .install-prompt { /* Este estilo ya no se usará */
             position: fixed;
             top: 20px;
             right: 20px;
@@ -440,7 +466,7 @@
             }
         }
 
-        .install-prompt button {
+        .install-prompt button { /* Este estilo ya no se usará */
             margin-left: 10px;
             padding: 5px 10px;
             border: none;
@@ -537,12 +563,16 @@
                 font-size: 2em;
             }
 
-            .header h1, #installButton {
+            .header h1 {
                 display: block;
                 margin: 5px auto;
             }
-            #installButton {
-                width: fit-content;
+            .header-buttons {
+                flex-direction: column; /* Apila los botones en móviles */
+                align-items: center;
+            }
+            .header-button {
+                width: 100%; /* Los botones ocupan todo el ancho */
             }
 
             .dollar-grid {
@@ -595,24 +625,21 @@
     </style>
 </head>
 <body>
-    <div id="installPrompt" class="install-prompt">
-        <span>¿Instalar la aplicación?</span>
-        <button onclick="installApp()" style="background: white; color: #3b82f6;">Instalar</button>
-        <button onclick="dismissInstall()" style="background: transparent; color: white;">Ahora no</button>
-    </div>
-
-    <div class="container">
-        <div id="topBanner" class="top-banner" style="display: none;">
-            <p>¡Bienvenido! Los precios en vivo son informativos y utilizan la API de Alpha Vantage (USD) y la cotización MEP para la conversión a pesos ($).</p>
-            <button class="btn-dismiss" onclick="dismissBanner()">✖</button>
-        </div>
-        
-        <div id="statusMessage" style="padding: 10px; margin: 10px auto; border-radius: 8px; font-weight: 600; display: none; transition: all 0.3s ease;"></div>
+    <!-- El installPrompt ya no es necesario como banner flotante --><div class="container">
+        <!-- El topBanner ha sido removido --><div id="statusMessage" style="padding: 10px; margin: 10px auto; border-radius: 8px; font-weight: 600; display: none; transition: all 0.3s ease;"></div>
 
         <header class="header">
             <h1 style="display: inline-block;">📈 GuiarCapital</h1>
-            <button id="installButton" onclick="installApp()" title="Instalar como App o Acceso Directo" style="display: none;">⬇️ Instalar App</button>
             <p>Gestiona tus inversiones y portafolios de manera profesional</p>
+            
+            <div class="header-buttons">
+                <button id="installButton" class="header-button" onclick="installApp()" title="Instalar como App o Acceso Directo" style="display: none;">
+                    ⬇️ Instalar App
+                </button>
+                <button id="shareButton" class="header-button" onclick="shareApp()" title="Compartir aplicación" style="display: none;">
+                    🔗 Compartir
+                </button>
+            </div>
             
             <div id="dollarRates" class="dollar-widget">
                 <h3>💵 Cotizaciones del Dólar</h3>
@@ -787,26 +814,21 @@
                 <select id="portfolioFilterTransactions" onchange="filterTransactions()">
                     <option value="all">Todas las carteras</option>
                 </select>
-                <!-- BOTÓN PARA PERSONALIZAR COLUMNAS -->
-                <button class="btn btn-secondary" onclick="toggleColumnCustomization(event)" style="flex-shrink: 0;">
+                <!-- BOTÓN PARA PERSONALIZAR COLUMNAS --><button class="btn btn-secondary" onclick="toggleColumnCustomization(event)" style="flex-shrink: 0;">
                     ⚙️ Personalizar Columnas
                 </button>
                 
-                <!-- DROPDOWN DE PERSONALIZACIÓN -->
-                <div id="columnCustomizationDropdown" class="dollar-widget" style="display: none; position: absolute; z-index: 100; padding: 15px; top: 50px; right: 0; width: 300px; background: rgba(30, 41, 59, 1); border: 1px solid #3b82f6; box-shadow: 0 4px 12px rgba(0,0,0,0.5);">
+                <!-- DROPDOWN DE PERSONALIZACIÓN --><div id="columnCustomizationDropdown" class="dollar-widget" style="display: none; position: absolute; z-index: 100; padding: 15px; top: 50px; right: 0; width: 300px; background: rgba(30, 41, 59, 1); border: 1px solid #3b82f6; box-shadow: 0 4px 12px rgba(0,0,0,0.5);">
                     <h4 style="color: #e2e8f0; margin-bottom: 10px; font-weight: 600;">Columnas Visibles</h4>
                     <div id="columnCheckboxes" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 14px;">
-                        <!-- Checkboxes will be rendered here by JS -->
-                    </div>
-                    <!-- El botón de cerrar es útil, pero al ocultar por click fuera ya funciona -->
-                </div>
+                        <!-- Checkboxes will be rendered here by JS --></div>
+                    <!-- El botón de cerrar es útil, pero al ocultar por click fuera ya funciona --></div>
             </div>
 
             <div class="scrollable-table">
                 <table id="transactionsTable" class="transactions-table">
                     <thead>
-                        <!-- Headers are generated dynamically -->
-                    </thead>
+                        <!-- Headers are generated dynamically --></thead>
                     <tbody></tbody>
                 </table>
             </div>
@@ -856,7 +878,7 @@
         let portfolios = JSON.parse(localStorage.getItem('portfolios') || '[]');
         let transactions = JSON.parse(localStorage.getItem('transactions') || '[]');
         let favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
-        let deferredPrompt;
+        let deferredPrompt; // Variable para almacenar el evento beforeinstallprompt
         let dollarRates = {};
         let stockPricesCache = {};
         const ALPHA_VANTAGE_API_KEY = '1RW4YGC5ZFFQHGA6';
@@ -1000,10 +1022,7 @@
         
         // --- Funciones de Utilidad (Mantenidas) ---
 
-        function dismissBanner() {
-            document.getElementById('topBanner').style.display = 'none';
-            localStorage.setItem('bannerDismissed', 'true');
-        }
+        // La función dismissBanner ya no es necesaria
         
         function showCustomAlert(message, type = 'alert') {
             const statusElement = document.getElementById('statusMessage');
@@ -1486,8 +1505,7 @@
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredPrompt = e;
-            document.getElementById('installButton').style.display = 'inline-block';
-            document.getElementById('installPrompt').style.display = 'block';
+            document.getElementById('installButton').style.display = 'inline-flex'; // Mostrar el botón
         });
 
         function installApp() {
@@ -1498,18 +1516,68 @@
                         showCustomAlert('¡App instalada con éxito!', 'success');
                     }
                     deferredPrompt = null;
-                    document.getElementById('installButton').style.display = 'none';
-                    document.getElementById('installPrompt').style.display = 'none';
+                    updateInstallButtonState(); // Actualizar el estado del botón después de la instalación
                 });
             } else {
                  showCustomAlert('La instalación PWA no está disponible o la aplicación ya está instalada.', 'info');
-                 document.getElementById('installButton').style.display = 'none';
+                 updateInstallButtonState(); // Asegurarse de que el botón se actualice si ya está instalada
             }
         }
 
-        function dismissInstall() {
-            document.getElementById('installPrompt').style.display = 'none';
+        function shareApp() {
+            if (navigator.share) {
+                navigator.share({
+                    title: 'GuiarCapital - Tu gestor de portafolios',
+                    text: '¡Gestiona tus inversiones y portafolios de manera profesional con GuiarCapital!',
+                    url: window.location.href,
+                }).then(() => {
+                    showCustomAlert('¡Gracias por compartir!', 'success');
+                }).catch((error) => {
+                    console.error('Error al compartir:', error);
+                    showCustomAlert('No se pudo compartir la aplicación.', 'alert');
+                });
+            } else {
+                // Fallback para navegadores que no soportan Web Share API
+                showCustomAlert('Tu navegador no soporta la función de compartir. Puedes copiar el enlace manualmente.', 'info');
+                // Opcionalmente, puedes copiar el URL al portapapeles aquí
+                navigator.clipboard.writeText(window.location.href).then(() => {
+                    showCustomAlert('Enlace copiado al portapapeles!', 'success');
+                }).catch(err => {
+                    console.error('Error al copiar al portapapeles:', err);
+                });
+            }
         }
+
+        function updateInstallButtonState() {
+             const installBtn = document.getElementById('installButton');
+             const shareBtn = document.getElementById('shareButton');
+
+             // Mostrar el botón de compartir si está disponible
+             if (navigator.share) {
+                 shareBtn.style.display = 'inline-flex';
+             } else {
+                 shareBtn.style.display = 'none'; // Ocultar si no hay soporte
+             }
+
+             // Lógica para el botón de instalación
+             if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) {
+                 // La aplicación está instalada (o se lanzó desde el acceso directo)
+                 installBtn.innerText = '✅ App Instalada';
+                 installBtn.disabled = true;
+                 installBtn.style.background = '#475569'; // Cambiar a un color gris
+                 installBtn.style.display = 'inline-flex'; // Asegurarse de que esté visible
+                 document.getElementById('installPrompt').style.display = 'none'; // Eliminar el prompt antiguo si todavía existía
+             } else if (deferredPrompt) {
+                 // La aplicación no está instalada, pero es instalable
+                 installBtn.innerText = '⬇️ Instalar App';
+                 installBtn.disabled = false;
+                 installBtn.style.background = '#10b981';
+                 installBtn.style.display = 'inline-flex';
+             } else {
+                 // No instalable o no se ha disparado el prompt
+                 installBtn.style.display = 'none';
+             }
+         }
 
         function showTab(tabName, element) {
             document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
@@ -1611,7 +1679,7 @@
             
             selects.forEach(selectId => {
                 const select = document.getElementById(selectId);
-                select.innerHTML = '<option value="">Seleccionar portafolio</option>';
+                select.innerHTML = '<option value="">Seleccionar portafolios</option>';
                 
                 portfolios.forEach(portfolio => {
                     select.innerHTML += `<option value="${portfolio.id}">${portfolio.name} (${portfolio.broker})</option>`;
@@ -2194,17 +2262,7 @@
             displayPortfolios();
             displayFavorites();
             
-            if (localStorage.getItem('bannerDismissed') !== 'true') {
-                document.getElementById('topBanner').style.display = 'flex';
-            }
-
-            if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) {
-                 const installBtn = document.getElementById('installButton');
-                 installBtn.innerText = '✅ App Instalada';
-                 installBtn.disabled = true;
-                 installBtn.style.background = '#475569';
-                 installBtn.style.display = 'inline-block';
-            }
+            updateInstallButtonState(); // Llamar para configurar el estado inicial de los botones
             
             if (portfolios.length > 0) {
                 calculateAndDisplaySummary();
