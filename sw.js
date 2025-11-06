@@ -3,8 +3,9 @@ const urlsToCache = [
   '/',
   '/index.html',
   '/manifest.json',
-  '/assets/icon-192.png',
-  '/assets/icon-512.png'
+  // Es importante que estos iconos realmente existan en tu ruta /assets/
+  '/assets/icon-192.png', 
+  '/assets/icon-512.png' 
 ];
 
 self.addEventListener('install', event => {
@@ -40,6 +41,10 @@ self.addEventListener('fetch', event => {
           if (event.request.destination === 'document') {
             return caches.match('/index.html');
           }
+        });
+      })
+  );
+});
         });
       })
   );
