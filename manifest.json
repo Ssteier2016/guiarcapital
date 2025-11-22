@@ -4,8 +4,8 @@
 "description": "Herramienta profesional para la gestión y análisis de portafolios de acciones y CEDEARs.",
 "start_url": "/index.html",
 "display": "standalone",
-"background_color": "#1e293b",
-"theme_color": "#3b82f6",
+"background_color": "#FFFFFF",
+"theme_color": "#FFFFFF",
 "orientation": "portrait-primary",
 "icons": [
 {
